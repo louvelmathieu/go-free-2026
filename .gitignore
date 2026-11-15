@@ -1,0 +1,7 @@
+# binaires et profils
+*.test
+*.prof
+*.out
+coverage.html
+/bin/
+.idea/
