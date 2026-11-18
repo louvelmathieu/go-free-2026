@@ -35,5 +35,4 @@ func main() {
 	wrapped := fmt.Errorf("upgrade ord_42: %w, %w", errLegacy, errRelease)
 	fmt.Println("fmt.Errorf avec deux %w :", wrapped)
 	fmt.Println("Is(wrapped, ErrStock) =", errors.Is(wrapped, ErrStock))
-	fmt.Println("Is(wrapped, ErrLegacyDown) =", errors.Is(wrapped, ErrLegacyDown))
 }

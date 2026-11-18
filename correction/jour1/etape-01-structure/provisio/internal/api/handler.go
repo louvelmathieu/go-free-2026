@@ -51,7 +51,7 @@ func (h *Handler) createOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := domain.NewOrder(domain.OrderType(req.Type), req.CustomerID, req.Target)
+	order, err := domain.NewOrder(newID(), domain.OrderType(req.Type), req.CustomerID, req.Target)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -81,4 +81,10 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+func newID() string {
+	b := make([]byte, 8)
+	_, _ = rand.Read(b)
+	return "ord_" + hex.EncodeToString(b)
 }

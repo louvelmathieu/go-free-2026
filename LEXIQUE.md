@@ -13,16 +13,16 @@ Les termes et abréviations employés dans les slides, module par module, en une
 - **Valeur zéro (ou vierge)** : Ce que vaut une variable déclarée sans initialisation : 0, "", nil, ou une struct dont tous les champs sont à zéro. Un bon type est utilisable tel quel.
 - **Groupes de sérialisation (sheriff)** : Un tag groups:"list,detail" sur les champs, et une bibliothèque tierce (github.com/liip/sheriff) qui ne garde que les champs du groupe demandé avant json.Marshal. Une vue par route (liste, détail) sans struct supplémentaire.
 - **reflect** : Le package qui permet d'examiner et de manipuler les types à l'exécution (champs, tags, méthodes par leur nom). Les bibliothèques génériques en vivent, le code métier doit s'en passer.
-- **unsafe** : Le package qui contourne le système de types : conversions de pointeurs arbitraires, accès mémoire direct. Sizeof et Offsetof mesurent sans danger, le reste est à proscrire.
+- **unsafe** : Le package qui contourne le système de types : conversions de pointeurs arbitraires, accès mémoire direct. Sizeof et Offsetof mesurent sans danger, le reste se réserve à un chemin chaud prouvé par un profil.
 - **Functional options** : Un constructeur New(opts ...Option) où chaque option est une fonction qui modifie la struct. Permet d'ajouter un réglage sans casser les appels existants.
 
 ## 2. Gestion des erreurs
 
 - **Sentinelle** : Une erreur déclarée une fois comme variable (var ErrNotFound = errors.New(...)) et comparée avec errors.Is. Pour dire « laquelle », pas « avec quels détails ».
 - **Erreur typée** : Une struct qui implémente error et transporte des champs (Field, Step...). On la récupère avec errors.As.
-- **Enrober (wrap)** : Créer une nouvelle erreur qui contient l'ancienne : fmt.Errorf("contexte: %w", err). La chaîne reste inspectable.
-- **%w** : Le verbe de fmt.Errorf qui enrobe. Avec %v l'erreur d'origine devient du texte et errors.Is ne la retrouve plus.
-- **Chaîne d'erreurs** : La suite des erreurs enrobées les unes dans les autres, de la plus externe à la cause. errors.Is et errors.As la parcourent.
+- **Wrapper** : Créer une nouvelle erreur qui contient l'ancienne : fmt.Errorf("contexte: %w", err). La chaîne reste inspectable.
+- **%w** : Le verbe de fmt.Errorf qui wrappe. Avec %v l'erreur d'origine devient du texte et errors.Is ne la retrouve plus.
+- **Chaîne d'erreurs** : La suite des erreurs wrappées les unes dans les autres, de la plus externe à la cause. errors.Is et errors.As la parcourent.
 - **Unwrap** : La méthode qu'une erreur typée implémente pour exposer celle qu'elle contient. C'est elle qui rend la chaîne traversable.
 - **errors.Join** : Regroupe plusieurs erreurs en une seule (une étape qui échoue puis une compensation qui échoue aussi).
 - **Frontière** : L'endroit où une erreur Go devient autre chose : un code HTTP, un message utilisateur. Une seule fonction s'en charge (writeError).
@@ -77,24 +77,26 @@ Les termes et abréviations employés dans les slides, module par module, en une
 
 ## 7. Fuites de goroutines
 
-- **Goroutine** : Un fil d'exécution léger géré par Go. On en lance des milliers, mais chacune doit avoir une fin.
+- **Goroutine** : Un thread léger géré par Go. On en lance des milliers, mais chacune doit avoir une fin.
 - **Fuite de goroutines** : Une goroutine qui ne se terminera jamais parce qu'elle attend quelque chose qui ne viendra pas. La mémoire monte, le service s'étouffe.
-- **pprof** : L'outil de profilage de Go. Sur /debug/pprof/goroutine il liste toutes les goroutines vivantes et où elles sont bloquées.
-- **Profil goroutineleak** : Nouveau profil pprof de Go 1.27 (/debug/pprof/goroutineleak) : ne liste que les goroutines bloquées sur un canal ou un verrou devenu inatteignable, donc les fuites. Aveugle aux attentes réseau et aux Sleep.
-- **Pile (stack trace)** : La liste des fonctions en cours d'appel pour une goroutine. C'est ce qu'on lit pour savoir où elle attend.
+- **pprof** : L'outil de profiling de Go. Sur /debug/pprof/goroutine il liste toutes les goroutines vivantes et où elles sont bloquées.
+- **Profil goroutineleak** : Nouveau profil pprof de Go 1.27 (/debug/pprof/goroutineleak) : ne liste que les goroutines bloquées sur un channel ou un lock devenu inatteignable, donc les fuites. Aveugle aux attentes réseau et aux Sleep.
+- **Stack trace** : La liste des fonctions en cours d'appel pour une goroutine. C'est ce qu'on lit pour savoir où elle attend.
 - **goleak** : Une bibliothèque de test (go.uber.org/goleak) qui fait échouer un test s'il reste des goroutines à la fin.
 - **Race detector** : go test -race : détecte deux goroutines qui touchent la même mémoire sans synchronisation.
-- **select** : L'instruction qui attend sur plusieurs canaux à la fois. Avec une branche sur ctx.Done(), une attente devient annulable.
-- **Channel (canal)** : Une file de communication entre goroutines. Bufferisé ou non, il bloque quand il est plein ou vide.
+- **select** : L'instruction qui attend sur plusieurs channels à la fois. Avec une branche sur ctx.Done(), une attente devient annulable.
+- **Channel** : Une file de communication entre goroutines. Bufferisé ou non, il bloque quand il est plein ou vide.
 
 ## 8. Borner la concurrence
 
 - **Pool de workers** : Un nombre fixe de goroutines qui lisent des tâches dans une file. On borne la concurrence au lieu de lancer une goroutine par requête.
-- **File bornée** : Une file d'attente de taille fixe. Pleine, elle refuse : c'est le délestage.
-- **Délestage (back-pressure)** : Refuser explicitement du travail quand on sature (503 + Retry-After) plutôt que de l'accepter et s'effondrer.
+- **Queue bornée** : Une queue de taille fixe. Pleine, elle refuse : c'est le load shedding.
+- **Load shedding** : Refuser explicitement du travail quand on sature (503 + Retry-After) plutôt que de l'accepter et s'effondrer.
 - **Sémaphore** : Un compteur de jetons : au plus N appels en même temps vers une ressource. x/sync/semaphore.Weighted.
-- **Mutex / RWMutex** : Un verrou. RWMutex laisse plusieurs lecteurs en même temps mais un seul écrivain.
-- **Data race** : Deux goroutines accèdent à la même donnée, dont une en écriture, sans verrou. Résultat indéfini, détecté par -race.
+- **errgroup** : Un WaitGroup qui remonte la première erreur et annule les autres tâches (x/sync/errgroup). SetLimit(K) borne le nombre en parallèle.
+- **Fan-out / fan-in** : Répartir un travail sur plusieurs goroutines (fan-out), puis rassembler leurs résultats (fan-in).
+- **Mutex / RWMutex** : Un lock. RWMutex laisse plusieurs lecteurs en même temps mais un seul écrivain.
+- **Data race** : Deux goroutines accèdent à la même donnée, dont une en écriture, sans lock. Résultat indéfini, détecté par -race.
 - **sync.Once** : Garantit qu'une fonction ne s'exécute qu'une fois, même appelée depuis plusieurs goroutines.
 - **Retry-After** : En-tête HTTP qui dit au client dans combien de temps réessayer. Accompagne un 503.
 
@@ -110,48 +112,47 @@ Les termes et abréviations employés dans les slides, module par module, en une
 
 ## 10. Tests
 
-- **Test unitaire** : Un test qui vérifie un composant seul, ses dépendances remplacées par des doublures.
+- **Test unitaire** : Un test qui vérifie un composant seul, ses dépendances remplacées par des test doubles.
 - **Table-driven test** : Un test écrit comme une liste de cas (entrée, attendu) parcourue en boucle. Le style idiomatique en Go.
 - **assert vs require** : testify : assert note l'échec et continue, require arrête le test tout de suite. require pour les préconditions.
-- **Suite** : testify/suite : une struct qui regroupe des tests avec un SetupTest exécuté avant chacun. Évite de répéter le câblage.
-- **Fake / mock / stub** : Fake : une vraie implémentation simplifiée (en mémoire). Mock : vérifie les appels reçus. Stub : renvoie des valeurs fixes.
-- **mockery** : L'outil qui génère les mocks testify à partir des interfaces. Configuré dans .mockery.yml, v3.
+- **Suite** : testify/suite : une struct qui regroupe des tests. suite.Run appelle SetupTest avant chacun (et SetupSuite, TearDownTest, TearDownSuite s'ils existent). Évite de répéter le câblage.
+- **Test double** : Tout ce qui remplace une vraie dépendance dans un test. Fake, spy, stub et mock en sont des variantes.
+- **Fake / spy** : Fake : une vraie implémentation simplifiée (en mémoire, avec latence et pannes simulées). Spy : répond ce qu'on lui règle et note les appels reçus.
 - **httptest** : Le package standard pour tester un handler HTTP sans réseau : httptest.NewRequest, httptest.NewRecorder.
-- **fxtest, fx.Replace** : fxtest.New démarre une app fx dans un test et échoue proprement. fx.Replace substitue un composant du graphe.
-- **synctest** : testing/synctest : exécute un test dans un temps virtuel. Un timeout de 5 s passe en quelques millisecondes.
+- **fxtest, fx.Replace** : fxtest.New démarre une app fx dans un test et échoue proprement. fx.Replace remplace un composant du graphe par une valeur fournie par le test.
+- **fx.Populate** : Recopie un objet du graphe fx dans une variable du test, pour pouvoir s'en servir.
+- **synctest (bonus)** : testing/synctest : exécute un test dans un temps virtuel. Un timeout de 5 s passe en quelques millisecondes.
 - **Couverture** : La part du code exécutée par les tests (go test -cover). Un indicateur, pas un objectif.
 
 ## 11. Débugger en autonomie
 
 - **Panic** : L'arrêt brutal d'une goroutine sur une erreur irrécupérable (nil pointer, index hors limites). Non rattrapé, il tue le processus.
-- **Trace de pile** : Ce que Go imprime à un panic : pour chaque goroutine, la liste des appels en cours. Se lit de haut en bas, première ligne de votre code = la bonne.
+- **Stack trace** : Ce que Go imprime à un panic : pour chaque goroutine, la liste des appels en cours. Se lit de haut en bas, première ligne de votre code = la bonne.
 - **Deadlock** : Des goroutines qui s'attendent mutuellement pour toujours. Go le détecte quand tout le monde dort : « all goroutines are asleep ».
-- **SIGQUIT** : Le signal (Ctrl-\) qui fait imprimer à un programme Go toutes ses piles sans l'arrêter proprement. Pour un service qui semble figé.
-- **Delve (dlv)** : Le débogueur de Go. dlv debug, dlv test, dlv attach, dlv exec.
-- **Point d'arrêt (breakpoint)** : Une ligne où le débogueur s'arrête. Conditionnel : seulement si une expression est vraie (attempt == 3).
-- **attach** : Brancher le débogueur sur un processus déjà en cours d'exécution, par son PID.
-- **launch.json** : La configuration de débogage de VS Code : quoi lancer, avec quels arguments et variables d'environnement.
+- **SIGQUIT** : Le signal (Ctrl-\) qui fait imprimer à un programme Go toutes ses stacks sans l'arrêter proprement. Pour un service qui semble figé.
+- **Delve (dlv)** : Le debugger de Go. dlv debug, dlv test, dlv attach, dlv exec.
+- **Breakpoint** : Une ligne où le debugger s'arrête. Conditionnel : seulement si une expression est vraie (attempt == 3).
+- **attach** : Brancher le debugger sur un processus déjà en cours d'exécution, par son PID.
+- **launch.json** : La configuration de debug de VS Code : quoi lancer, avec quels arguments et variables d'environnement.
 
 ## 12. Performance
 
 - **Profil** : Une mesure de où le programme passe son temps (CPU) ou alloue sa mémoire (mémoire). Produit par pprof, à lire avant d'optimiser.
 - **b.Loop** : La boucle de benchmark moderne (Go 1.24) : for b.Loop() { ... }. Remplace for i := 0; i < b.N; i++ et empêche le compilateur d'optimiser le code mesuré.
 - **Benchmark** : Une fonction BenchmarkXxx exécutée en boucle par go test -bench. Donne ns/op, B/op et allocs/op.
-- **Allocation** : Une réservation de mémoire sur le tas, que le ramasse-miettes devra libérer. Moins on en fait, moins on paie.
+- **Allocation** : Une réservation de mémoire sur la heap, que le garbage collector devra libérer. Moins on en fait, moins on paie.
 - **benchstat** : L'outil qui compare deux séries de benchmarks et dit si la différence est significative.
 - **Alignement** : La façon dont le compilateur place les champs d'une struct en mémoire. Leur ordre change la taille de la struct.
 
 ## 13. Sécurité
 
-- **Durcissement (hardening)** : Fermer les portes qu'un service laisse ouvertes par défaut : timeouts, taille des corps, en-têtes, origines autorisées, récupération des panics.
-- **Timeouts du http.Server** : ReadHeaderTimeout, ReadTimeout, WriteTimeout, IdleTimeout. Sans eux, un client lent ou malveillant garde une connexion pour toujours.
-- **Path traversal** : Une attaque où un chemin fourni par le client (../../etc/passwd) sort du dossier prévu.
-- **os.OpenRoot** : API Go 1.24 : ouvre des fichiers relativement à un dossier racine, sans possibilité d'en sortir.
-- **CORS** : Les en-têtes qui disent à un navigateur quelles origines (sites) peuvent appeler l'API. En liste blanche, jamais *.
-- **MaxBytesReader** : Limite la taille d'un corps de requête. Au-delà, lecture refusée et 413.
-- **nosniff** : L'en-tête X-Content-Type-Options: nosniff : le navigateur ne devine pas le type d'un fichier, il croit le Content-Type.
-- **Recover** : Un middleware qui rattrape un panic dans un handler, logue, et répond 500 au lieu de laisser tomber la connexion.
+- **Gateway / reverse proxy / ingress** : Le composant d'infrastructure placé devant les services : il reçoit les requêtes de l'extérieur et les leur transmet, avec ses propres limites et délais.
 - **govulncheck** : L'outil officiel qui liste les vulnérabilités connues des dépendances réellement appelées par votre code.
+- **DoS (denial of service)** : Rendre un service indisponible, en le saturant ou en le faisant planter. Pas besoin d'y entrer.
+- **MaxBytesReader** : Limite la taille d'un corps de requête. Au-delà, la lecture est refusée et on répond 413.
+- **Timeouts du http.Server** : ReadHeaderTimeout, ReadTimeout, WriteTimeout, IdleTimeout. Sans eux, un client lent garde une connexion pour toujours.
+- **recover** : La fonction qui arrête une panic. Elle ne fonctionne que dans un defer. À mettre au début des goroutines qu'on lance soi-même.
+- **CORS** : Les en-têtes qui disent à un navigateur quels sites peuvent appeler l'API. En liste blanche, jamais *.
 
 # Pour aller plus loin
 
@@ -194,20 +195,19 @@ Les ressources citées en bas des slides.
 - [Graceful Shutdown in Go : Practical Patterns (VictoriaMetrics)](https://victoriametrics.com/blog/go-graceful-shutdown/)
 - [http.Server.Shutdown (pkg.go.dev)](https://pkg.go.dev/net/http#Server.Shutdown)
 - [Table Driven Tests (Go wiki)](https://go.dev/wiki/TableDrivenTests)
-- [Documentation mockery v3](https://vektra.github.io/mockery/latest/)
 - [testify/suite (pkg.go.dev)](https://pkg.go.dev/github.com/stretchr/testify/suite)
 - [net/http/httptest (pkg.go.dev)](https://pkg.go.dev/net/http/httptest)
-- [fx : Testing](https://pkg.go.dev/go.uber.org/fx/fxtest)
+- [Package fxtest (pkg.go.dev)](https://pkg.go.dev/go.uber.org/fx/fxtest)
+- [Delve : installation (GitHub)](https://github.com/go-delve/delve/tree/master/Documentation/installation)
 - [Testing concurrent code with testing/synctest (blog Go)](https://go.dev/blog/testing-time)
 - [Diagnostics (go.dev)](https://go.dev/doc/diagnostics)
-- [Delve : commandes du débogueur](https://github.com/go-delve/delve/tree/master/Documentation/cli)
+- [Delve : commandes du debugger](https://github.com/go-delve/delve/tree/master/Documentation/cli)
 - [vscode-go : Debugging (wiki)](https://github.com/golang/vscode-go/wiki/debugging)
 - [GoLand : Debug Go code](https://www.jetbrains.com/help/go/debugging-code.html)
 - [Profiling Go Programs (blog Go)](https://go.dev/blog/pprof)
 - [High Performance Go Workshop, Dave Cheney](https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html)
 - [More predictable benchmarking with testing.B.Loop (blog Go)](https://go.dev/blog/testing-b-loop)
 - [benchstat](https://pkg.go.dev/golang.org/x/perf/cmd/benchstat)
-- [Traversal-resistant file APIs (blog Go)](https://go.dev/blog/osroot)
 - [The complete guide to Go net/http timeouts (Cloudflare)](https://blog.cloudflare.com/the-complete-guide-to-golang-net-http-timeouts/)
 - [Tutorial : Find and fix vulnerable dependencies with govulncheck](https://go.dev/doc/tutorial/govulncheck)
 - [OWASP Go Secure Coding Practices](https://github.com/OWASP/Go-SCP)

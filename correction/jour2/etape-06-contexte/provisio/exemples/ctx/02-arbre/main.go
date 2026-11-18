@@ -15,9 +15,9 @@ func main() {
 
 	req, cancelReq := context.WithCancel(root)              // la requête HTTP
 	step1, cancel1 := context.WithTimeout(req, time.Second) // une étape
-	step2, _ := context.WithTimeout(req, time.Second)       // une autre
-	//defer cancel1()
-	//defer cancel2()
+	step2, cancel2 := context.WithTimeout(req, time.Second) // une autre
+	defer cancel1()
+	defer cancel2()
 
 	// Un enfant dérivé avec WithoutCancel survit à l'annulation du parent
 	// (on garde les valeurs, on coupe le lien d'annulation).
@@ -31,5 +31,5 @@ func main() {
 
 	// Background et TODO : les deux racines. TODO signale "je ne sais pas
 	// encore quel contexte passer ici", c'est un marqueur de dette.
-	fmt.Println("Background =", context.Background().Err(), "| TODO =", context.TODO().Err())
+	fmt.Println("Background =", context.Background(), "| TODO =", context.TODO())
 }

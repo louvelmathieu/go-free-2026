@@ -8,6 +8,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"go.uber.org/fx"
@@ -28,11 +29,10 @@ func main() {
 		// fx.Invoke(func(*Server) {}),
 	)
 
-	app.Run()
-	//ctx := context.Background()
-	//if err := app.Start(ctx); err != nil {
-	//	panic(err)
-	//}
-	//_ = app.Stop(ctx)
+	ctx := context.Background()
+	if err := app.Start(ctx); err != nil {
+		panic(err)
+	}
+	_ = app.Stop(ctx)
 	fmt.Println("fx a démarré puis s'est arrêté sans jamais appeler NewServer")
 }

@@ -31,11 +31,9 @@ var ConfigModule = fx.Module("config",
 
 // Logging : le logger dépend de la config. fx déduit l'ordre tout seul.
 var LoggingModule = fx.Module("logging",
-	fx.Provide(
-		func(cfg config.Config) *slog.Logger {
-
-			return logging.New(os.Stdout, "provisio", cfg.Env, cfg.LogLevel)
-		}),
+	fx.Provide(func(cfg config.Config) *slog.Logger {
+		return logging.New(os.Stdout, "provisio", cfg.Env, cfg.LogLevel)
+	}),
 	// Invoke : exécuté au démarrage, même si personne ne consomme le résultat.
 	fx.Invoke(func(l *slog.Logger) { slog.SetDefault(l) }),
 )

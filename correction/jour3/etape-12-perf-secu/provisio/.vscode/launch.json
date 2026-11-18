@@ -1,0 +1,45 @@
+{
+  // Configurations de débogage VS Code (extension Go, Delve en dessous).
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "provisio (serveur)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/provisio",
+      "env": { "APP_LEGACY_FIX": "1", "APP_ENV": "dev" },
+      "buildFlags": "-gcflags=all=-N -l"
+    },
+    {
+      "name": "test courant",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${fileDirname}",
+      "args": ["-test.run", "${selectedText}", "-test.v"]
+    },
+    {
+      "name": "bug équipement (debug/03-fuite-stock)",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/debug/03-fuite-stock"
+    },
+    {
+      "name": "attacher à un processus",
+      "type": "go",
+      "request": "attach",
+      "mode": "local",
+      "processId": "${command:pickProcess}"
+    },
+    {
+      "name": "distant (dlv --headless sur le serveur)",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "host": "127.0.0.1",
+      "port": 2345
+    }
+  ]
+}

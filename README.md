@@ -11,6 +11,8 @@ structure ressemble à un vrai service.
 
 ```
 tp/00-monolithe/          point de départ du TP 1 : le service dans un seul main.go
+tp/11-debug/              point de départ du TP 11 : trois programmes à débugger, sans provisio
+tp/12-perf-secu/          point de départ du TP 12 : quatre exercices de mesure et de sécurité, sans provisio
 exemples/                 petits programmes autonomes montrés dans les slides (go run ./xx)
 correction/
   jour1/
@@ -22,7 +24,9 @@ correction/
     etape-05-freelib/     module 5  (go.work + module freelib + provisio)
     etape-06-contexte/ … etape-09-arret/
   jour3/
-    etape-10-tests/ … etape-12-perf-secu/
+    etape-10-tests/       module 10 (provisio testé)
+    etape-11-debug/       module 11 (les trois programmes corrigés, sans provisio)
+    etape-12-perf-secu/   modules 12 et 13 (les quatre exercices corrigés, sans provisio)
 ```
 
 Chaque `etape-XX` est l'état complet et compilable du projet à la fin du
@@ -30,6 +34,10 @@ module XX. C'est donc à la fois :
 
 - la **correction** du TP du module XX (`TP.md` dedans : énoncé, consignes, vérification),
 - la **base** du TP du module XX+1.
+
+Deux exceptions : les modules 11 (debug) et 12-13 (performance, sécurité) ne
+touchent pas à provisio. Leurs points de départ sont `tp/11-debug` et
+`tp/12-perf-secu`. La dernière version de provisio est celle de l'étape 10.
 
 `CHANGES.md` dans chaque étape liste ce qui a changé par rapport à la précédente.
 
@@ -39,8 +47,7 @@ lancer : soit une étape de provisio, soit un programme de `exemples/`.
 ## Prérequis
 
 - Go 1.27 ou plus récent (`go version`)
-- Pour le jour 3 : `mockery` v3 (`go install github.com/vektra/mockery/v3@latest`),
-  `dlv` (`go install github.com/go-delve/delve/cmd/dlv@latest`),
+- Pour le jour 3 : `dlv` (`go install github.com/go-delve/delve/cmd/dlv@latest`),
   `benchstat` et `govulncheck` (`go install golang.org/x/perf/cmd/benchstat@latest`,
   `go install golang.org/x/vuln/cmd/govulncheck@latest`)
 

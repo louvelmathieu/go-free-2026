@@ -44,11 +44,11 @@ var LoggingModule = fx.Module("logging",
 var ClientsModule = fx.Module("clients",
 	fx.Provide(
 		fx.Annotate(
-			func() *fake.Inventory { return &fake.Inventory{Latency: 30 * time.Second} },
+			func() *fake.Inventory { return &fake.Inventory{Latency: 300 * time.Millisecond} },
 			fx.As(new(orchestrator.Inventory)),
 		),
 		fx.Annotate(
-			func() *fake.Configurator { return &fake.Configurator{Latency: 30 * time.Second} },
+			func() *fake.Configurator { return &fake.Configurator{Latency: 200 * time.Millisecond} },
 			fx.As(new(orchestrator.Configurator)),
 		),
 		fx.Annotate(
@@ -57,12 +57,12 @@ var ClientsModule = fx.Module("clients",
 		),
 		fx.Annotate(
 			func(cfg config.Config) *fake.Legacy {
-				return &fake.Legacy{Latency: 30 * time.Second, FailRate: cfg.LegacyFailRate}
+				return &fake.Legacy{Latency: 400 * time.Millisecond, FailRate: cfg.LegacyFailRate}
 			},
 			fx.As(new(orchestrator.LegacyClient)),
 		),
 		fx.Annotate(
-			func() *fake.Billing { return &fake.Billing{Latency: 30 * time.Second} },
+			func() *fake.Billing { return &fake.Billing{Latency: 100 * time.Millisecond} },
 			fx.As(new(orchestrator.Billing)),
 		),
 	),

@@ -1,0 +1,20 @@
+# mockery v3 : configuration centralisée. `mockery` à la racine régénère tout.
+# Les mocks sont générés dans internal/<pkg>/mocks, package mocks.
+all: false
+template: testify
+dir: '{{.InterfaceDir}}/mocks'
+pkgname: mocks
+filename: 'mock_{{.InterfaceName | snakecase}}.go'
+structname: 'Mock{{.InterfaceName}}'
+packages:
+  gitlab.example.com/free/provisio/internal/orchestrator:
+    interfaces:
+      Inventory:
+      Configurator:
+      Stock:
+      LegacyClient:
+      Billing:
+  gitlab.example.com/free/provisio/internal/api:
+    interfaces:
+      Submitter:
+      Store:

@@ -19,7 +19,7 @@ func main() {
 	orch := orchestrator.New(
 		orchestrator.WithInventory(&fake.Inventory{Latency: 300 * time.Millisecond}),
 		orchestrator.WithConfigurator(&fake.Configurator{Latency: 200 * time.Millisecond}),
-		orchestrator.WithStock(fake.NewStock(2)),
+		orchestrator.WithStock(fake.NewStock(100)),
 		orchestrator.WithLegacy(&fake.Legacy{Latency: 400 * time.Millisecond, FailRate: 0.1}),
 		orchestrator.WithBilling(&fake.Billing{Latency: 100 * time.Millisecond}),
 		orchestrator.WithStepTimeout(2*time.Second),

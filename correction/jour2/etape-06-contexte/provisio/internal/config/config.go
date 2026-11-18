@@ -28,8 +28,8 @@ func Load() (Config, error) {
 		Env:            getenv("APP_ENV", "dev"),
 		Addr:           getenv("APP_ADDR", ":8080"),
 		LogLevel:       slog.LevelDebug,
-		StepTimeout:    200 * time.Second,
-		OrderTimeout:   1000 * time.Second,
+		StepTimeout:    2 * time.Second,
+		OrderTimeout:   10 * time.Second,
 		Stock:          100,
 		LegacyFailRate: 0.1,
 	}

@@ -3,8 +3,6 @@
 package domain
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"time"
 )
@@ -42,15 +40,11 @@ type Order struct {
 	steps      []string
 }
 
-func newID() string {
-	b := make([]byte, 8)
-	_, _ = rand.Read(b)
-	return "ord_" + hex.EncodeToString(b)
-}
-
 // NewOrder crée une commande en état "pending" après validation.
-func NewOrder(kind OrderType, customerID, target string) (*Order, error) {
-	id := newID()
+func NewOrder(id string, kind OrderType, customerID, target string) (*Order, error) {
+	if id == "" {
+		return nil, fmt.Errorf("new order: id vide")
+	}
 	if kind != OrderTypeActivation && kind != OrderTypeUpgrade {
 		return nil, fmt.Errorf("new order: type %q inconnu", kind)
 	}

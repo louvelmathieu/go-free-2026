@@ -1,0 +1,8 @@
+// Espace de travail de développement : Go résout freelib depuis le dossier
+// local au lieu du dépôt distant. Ce fichier ne se commite pas dans provisio.
+go 1.27
+
+use (
+	./freelib
+	./provisio
+)
